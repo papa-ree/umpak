@@ -69,10 +69,6 @@ class UmpakServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../resources/views' => resource_path('views/vendor/umpak'),
         ], 'umpak:views');
-
-        $this->publishes([
-            __DIR__ . '/../resources/js/umpak.js' => public_path('vendor/umpak/umpak.js'),
-        ], 'umpak:assets');
     }
 
     private function registerRoutes(): void

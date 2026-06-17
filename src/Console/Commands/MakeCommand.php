@@ -497,7 +497,11 @@ BLADE;
     {
         $this->components->task('Creating error pages', function () {
             $errors = [
+                '401' => ['Tidak Terautentikasi', 'Silakan login terlebih dahulu untuk mengakses halaman ini.'],
+                '403' => ['Akses Ditolak', 'Anda tidak memiliki izin untuk mengakses halaman ini.'],
                 '404' => ['Halaman Tidak Ditemukan', 'Halaman yang Anda cari tidak ada atau telah dipindahkan.'],
+                '419' => ['Halaman Kedaluwarsa', 'Halaman telah kedaluwarsa karena terlalu lama tidak ada aktivitas. Silakan segarkan halaman.'],
+                '429' => ['Terlalu Banyak Permintaan', 'Terlalu banyak permintaan dalam waktu singkat. Silakan coba lagi nanti.'],
                 '500' => ['Kesalahan Server', 'Terjadi kesalahan pada server. Silakan coba beberapa saat lagi.'],
                 '503' => ['Sedang Dalam Pemeliharaan', 'Sistem sedang dalam pemeliharaan. Silakan kembali nanti.'],
             ];

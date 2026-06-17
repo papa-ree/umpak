@@ -36,11 +36,47 @@
  *     @endforeach
  *   </nav>
  */
+// Tailwind CSS 4 Dark Mode Logic (Immediate execution to avoid FOUC)
+(function () {
+    const theme = localStorage.getItem('theme');
+    const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('dark', isDark);
+})();
+
 document.addEventListener('alpine:init', () => {
 
     Alpine.data('umpakNav', () => ({
         mobileOpen: false,
         activeDropdown: null,
+        isDark: document.documentElement.classList.contains('dark'),
+
+        init() {
+            // Watch for OS preference changes
+            window.matchMedia("(prefers-color-scheme: dark)").addEventListener('change', (e) => {
+                if (!localStorage.getItem('theme')) {
+                    this.applyTheme(e.matches);
+                }
+            });
+        },
+
+        toggleTheme() {
+            this.setTheme(this.isDark ? 'light' : 'dark');
+        },
+
+        setTheme(mode) {
+            if (mode === 'system') {
+                localStorage.removeItem('theme');
+                this.applyTheme(window.matchMedia("(prefers-color-scheme: dark)").matches);
+            } else {
+                localStorage.setItem('theme', mode);
+                this.applyTheme(mode === 'dark');
+            }
+        },
+
+        applyTheme(isDark) {
+            this.isDark = isDark;
+            document.documentElement.classList.toggle('dark', isDark);
+        },
 
         toggleMobile() {
             this.mobileOpen = !this.mobileOpen
@@ -73,3 +109,4 @@ document.addEventListener('alpine:init', () => {
     }))
 
 })
+
