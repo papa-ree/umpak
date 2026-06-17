@@ -36,12 +36,19 @@
  *     @endforeach
  *   </nav>
  */
-// Tailwind CSS 4 Dark Mode Logic (Immediate execution to avoid FOUC)
-(function () {
+// Tailwind CSS 4 Dark Mode Logic
+function applyDefaultTheme() {
     const theme = localStorage.getItem('theme');
     const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
     document.documentElement.classList.toggle('dark', isDark);
-})();
+}
+
+// Immediate execution to avoid FOUC
+applyDefaultTheme();
+
+// Re-apply on Livewire navigation
+document.addEventListener('livewire:navigated', applyDefaultTheme);
+
 
 document.addEventListener('alpine:init', () => {
 
