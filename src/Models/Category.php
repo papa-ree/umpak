@@ -2,6 +2,7 @@
 
 namespace Bale\Umpak\Models;
 
+use Bale\Umpak\Concerns\InteractsWithSeo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -21,6 +22,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Category extends Model
 {
+    use InteractsWithSeo;
+
     protected $keyType = 'string';
 
     public $incrementing = false;
@@ -30,5 +33,15 @@ class Category extends Model
     public function posts(): HasMany
     {
         return $this->hasMany(Post::class, 'category_slug', 'slug');
+    }
+
+    public function toData(): \Bale\Umpak\DTOs\CategoryData
+    {
+        return new \Bale\Umpak\DTOs\CategoryData(
+            id: $this->id,
+            name: $this->name,
+            slug: $this->slug,
+            seo: $this->seoMeta,
+        );
     }
 }

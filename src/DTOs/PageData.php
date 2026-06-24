@@ -28,6 +28,7 @@ readonly class PageData
         public ?array $content,
 
         public Carbon $updatedAt,
+        public ?object $seo = null,
     ) {}
 
     /**

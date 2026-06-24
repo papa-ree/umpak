@@ -2,6 +2,7 @@
 
 namespace Bale\Umpak\Models;
 
+use Bale\Umpak\Concerns\InteractsWithSeo;
 use Bale\Umpak\DTOs\PageData;
 use Illuminate\Database\Eloquent\Model;
 
@@ -29,6 +30,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Page extends Model
 {
+    use InteractsWithSeo;
+
     protected $keyType = 'string';
 
     public $incrementing = false;
@@ -51,6 +54,7 @@ class Page extends Model
             type: $this->type,
             content: $this->content,
             updatedAt: $this->updated_at,
+            seo: $this->seoMeta,
         );
     }
 }

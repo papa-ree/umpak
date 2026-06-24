@@ -2,6 +2,7 @@
 
 namespace Bale\Umpak\Models;
 
+use Bale\Umpak\Concerns\InteractsWithSeo;
 use Bale\Umpak\DTOs\PostData;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,7 +42,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Post extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, InteractsWithSeo;
 
     protected $keyType = 'string';
 
@@ -92,6 +93,7 @@ class Post extends Model
             categorySlug: $this->category_slug,
             publishedAt: $this->published_at ?? $this->created_at,
             updatedAt: $this->updated_at,
+            seo: $this->seoMeta,
         );
     }
 

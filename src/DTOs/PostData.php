@@ -36,6 +36,7 @@ readonly class PostData
         public ?string $categorySlug,
         public Carbon $publishedAt,
         public Carbon $updatedAt,
+        public ?object $seo = null,
     ) {}
 
     /**

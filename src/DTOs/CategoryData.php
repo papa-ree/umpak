@@ -8,5 +8,6 @@ readonly class CategoryData
         public string $id,
         public string $name,
         public string $slug,
+        public ?object $seo = null,
     ) {}
 }
