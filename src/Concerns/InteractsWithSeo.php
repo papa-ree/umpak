@@ -69,7 +69,15 @@ trait InteractsWithSeo
             return $this->seoMeta->og_image;
         }
 
-        return $this->thumbnail ?? null;
+        if (!empty($this->thumbnail)) {
+            if (str_starts_with($this->thumbnail, 'http')) {
+                return $this->thumbnail;
+            }
+
+            return cdn_asset('thumbnails/' . ltrim($this->thumbnail, '/'));
+        }
+
+        return null;
     }
 
     /**
