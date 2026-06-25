@@ -87,7 +87,7 @@ class Post extends Model
             id: $this->id,
             slug: $this->slug,
             title: $this->title,
-            excerpt: null,
+            excerpt: $this->getExcerpt(),
             content: $this->content,
             thumbnail: $this->thumbnail,
             categorySlug: $this->category_slug,
