@@ -41,7 +41,11 @@ class CdnService
 
         $orgSlug = ltrim($this->orgSlug(), '/');
 
-        return "{$this->baseUrl}/{$this->prefix}/{$orgSlug}/{$path}";
+        $fullPath = $orgSlug 
+            ? "{$this->prefix}/{$orgSlug}/{$path}" 
+            : "{$this->prefix}/{$path}";
+
+        return "{$this->baseUrl}/" . ltrim($fullPath, '/');
     }
 
     public function isEnabled(): bool

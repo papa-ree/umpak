@@ -89,7 +89,7 @@ class Post extends Model
             title: $this->title,
             excerpt: $this->getExcerpt(),
             content: $this->content,
-            thumbnail: $this->thumbnail ? cdn_asset($this->thumbnail) : null,
+            thumbnail: $this->thumbnail ? cdn_asset('thumbnails/' . $this->thumbnail) : null,
             categorySlug: $this->category_slug,
             publishedAt: $this->published_at ?? $this->created_at,
             updatedAt: $this->updated_at,
