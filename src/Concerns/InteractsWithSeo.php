@@ -32,11 +32,6 @@ trait InteractsWithSeo
      */
     public function getSeoTitle(): string
     {
-        // Try calling method from bale/seo trait if applied manually or exists
-        if (method_exists($this, 'getSeoTitleFromPackage')) {
-            return $this->getSeoTitleFromPackage();
-        }
-
         return $this->seoMeta?->title ?? $this->title ?? '';
     }
 
@@ -46,11 +41,87 @@ trait InteractsWithSeo
      */
     public function getSeoDescription(): string
     {
-        if (method_exists($this, 'getSeoDescriptionFromPackage')) {
-            return $this->getSeoDescriptionFromPackage();
+        return $this->seoMeta?->description ?? $this->excerpt ?? '';
+    }
+
+    /**
+     * Mendapatkan Open Graph Title.
+     */
+    public function getOgTitle(): string
+    {
+        return $this->seoMeta?->og_title ?? $this->getSeoTitle();
+    }
+
+    /**
+     * Mendapatkan Open Graph Description.
+     */
+    public function getOgDescription(): string
+    {
+        return $this->seoMeta?->og_description ?? $this->getSeoDescription();
+    }
+
+    /**
+     * Mendapatkan Open Graph Image.
+     */
+    public function getOgImage(): ?string
+    {
+        if ($this->seoMeta?->og_image) {
+            return $this->seoMeta->og_image;
         }
 
-        return $this->seoMeta?->description ?? $this->excerpt ?? '';
+        return $this->thumbnail ?? null;
+    }
+
+    /**
+     * Mendapatkan Keywords SEO.
+     */
+    public function getSeoKeywords(): string
+    {
+        return $this->seoMeta?->keywords ?? '';
+    }
+
+    /**
+     * Mendapatkan Canonical URL.
+     */
+    public function getCanonicalUrl(): ?string
+    {
+        return $this->seoMeta?->canonical_url ?? null;
+    }
+
+    /**
+     * Mendapatkan Robots Meta.
+     */
+    public function getSeoRobots(): string
+    {
+        return $this->seoMeta?->robots ?? 'index, follow';
+    }
+
+    /**
+     * Mendapatkan Structured Data (JSON-LD).
+     */
+    public function getStructuredData(): ?array
+    {
+        return $this->seoMeta?->structured_data ?? null;
+    }
+
+    /**
+     * Mendapatkan Open Graph Type.
+     */
+    public function getOgType(): string
+    {
+        if (str_contains(get_class($this), 'Post')) {
+            return 'article';
+        }
+
+        return 'website';
+    }
+
+    /**
+     * Mendapatkan Twitter Card Type.
+     */
+    public function getTwitterCardType(): string
+    {
+        return $this->seoMeta?->twitter_card ?? 'summary_large_image';
     }
 
     /**
