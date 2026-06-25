@@ -64,6 +64,10 @@ class CdnService
      */
     public function orgSlug(): string
     {
+        if (function_exists('umpak_org')) {
+            return (string) umpak_org('slug');
+        }
+
         try {
             return Option::getValue('organization_slug', '') ?? '';
         } catch (\Throwable) {
