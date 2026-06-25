@@ -39,7 +39,7 @@ class CdnService
             return "{$this->baseUrl}/{$this->prefix}/{$path}";
         }
 
-        $orgSlug = $this->orgSlug();
+        $orgSlug = ltrim($this->orgSlug(), '/');
 
         return "{$this->baseUrl}/{$this->prefix}/{$orgSlug}/{$path}";
     }
