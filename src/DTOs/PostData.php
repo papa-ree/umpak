@@ -89,7 +89,14 @@ readonly class PostData
 
     public function getOgImage(): ?string
     {
-        return $this->seo?->og_image ?? $this->thumbnail;
+        $image = $this->seo?->og_image ?? $this->thumbnail;
+
+        if (empty($image)) {
+            return null;
+        }
+
+        // Clean double slashes
+        return preg_replace('#(?<!:)/+#', '/', $image);
     }
 
     public function getSeoKeywords(): string
