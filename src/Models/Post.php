@@ -106,4 +106,28 @@ class Post extends Model
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
     }
+
+    /**
+     * Mendapatkan cuplikan konten untuk SEO.
+     */
+    public function getExcerpt(int $limit = 150): string
+    {
+        if (empty($this->content)) {
+            return '';
+        }
+
+        $text = '';
+
+        if (is_array($this->content) && isset($this->content['blocks'])) {
+            foreach ($this->content['blocks'] as $block) {
+                if ($block['type'] === 'paragraph' && ! empty($block['data']['text'])) {
+                    $text .= $block['data']['text'] . ' ';
+                }
+            }
+        } elseif (is_string($this->content)) {
+            $text = $this->content;
+        }
+
+        return \Illuminate\Support\Str::limit(strip_tags($text), $limit);
+    }
 }
