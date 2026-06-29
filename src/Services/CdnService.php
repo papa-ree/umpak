@@ -6,15 +6,27 @@ use Bale\Umpak\Models\Option;
 
 class CdnService
 {
-    private readonly bool $enabled;
-    private readonly string $baseUrl;
-    private readonly string $prefix;
-
-    public function __construct()
+    /**
+     * Baca config secara lazy saat digunakan, bukan di constructor.
+     *
+     * Keuntungan:
+     * - Selalu membaca config yang aktif (termasuk setelah config:cache diperbarui)
+     * - Tidak ada masalah jika singleton diinstansiasi sebelum config fully loaded
+     * - Perubahan config tanpa restart server langsung terefleksi
+     */
+    private function cdnEnabled(): bool
     {
-        $this->enabled = (bool) config('umpak.cdn.enabled', false);
-        $this->baseUrl = rtrim((string) config('umpak.cdn.url', ''), '/');
-        $this->prefix  = trim((string) config('umpak.cdn.prefix', 'bale'), '/');
+        return (bool) config('umpak.cdn.enabled', false);
+    }
+
+    private function cdnBaseUrl(): string
+    {
+        return rtrim((string) config('umpak.cdn.url', ''), '/');
+    }
+
+    private function cdnPrefix(): string
+    {
+        return trim((string) config('umpak.cdn.prefix', 'bale'), '/');
     }
 
     /**
@@ -33,45 +45,45 @@ class CdnService
      */
     public function url(string $path): string
     {
-        $path = ltrim($path, '/');
+        $path   = ltrim($path, '/');
+        $prefix = $this->cdnPrefix();
 
         // Bersihkan path dari directory traversal (.. atau \\)
         $path = str_replace('\\', '/', $path);
         $path = preg_replace('#\.\.(/|$)#', '', $path);
 
         // Cegah double-prefix: jika path sudah diawali dengan prefix/, gunakan as-is
-        if (str_starts_with($path, "{$this->prefix}/")) {
-            $fullPath = $path;
+        if (str_starts_with($path, "{$prefix}/")) {
             return $this->isEnabled()
-                ? "{$this->baseUrl}/{$fullPath}"
-                : asset($fullPath);
+                ? "{$this->cdnBaseUrl()}/{$path}"
+                : asset($path);
         }
 
         if (str_starts_with($path, 'shared/')) {
-            $fullPath = "{$this->prefix}/{$path}";
+            $fullPath = "{$prefix}/{$path}";
             return $this->isEnabled()
-                ? "{$this->baseUrl}/{$fullPath}"
+                ? "{$this->cdnBaseUrl()}/{$fullPath}"
                 : asset($fullPath);
         }
 
         $orgSlug  = ltrim($this->orgSlug(), '/');
         $fullPath = $orgSlug
-            ? "{$this->prefix}/{$orgSlug}/{$path}"
-            : "{$this->prefix}/{$path}";
+            ? "{$prefix}/{$orgSlug}/{$path}"
+            : "{$prefix}/{$path}";
 
         return $this->isEnabled()
-            ? "{$this->baseUrl}/" . ltrim($fullPath, '/')
+            ? "{$this->cdnBaseUrl()}/" . ltrim($fullPath, '/')
             : asset($fullPath);
     }
 
     public function isEnabled(): bool
     {
-        return $this->enabled && $this->baseUrl !== '';
+        return $this->cdnEnabled() && $this->cdnBaseUrl() !== '';
     }
 
-    public function baseUrl(): string
+    public function getBaseUrl(): string
     {
-        return $this->baseUrl;
+        return $this->cdnBaseUrl();
     }
 
     /**
