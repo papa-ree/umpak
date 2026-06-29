@@ -79,7 +79,7 @@ class Navigation extends Model
      * Generate URL yang benar berdasarkan url_mode.
      *
      * - url_mode = true  → gunakan kolom url langsung
-     * - url_mode = false → generate dari page slug
+     * - url_mode = false → generate dari page slug via route 'bale.view-page'
      * - url_mode = null  → fallback ke '#'
      */
     public function resolveUrl(): string
@@ -87,7 +87,12 @@ class Navigation extends Model
         $url = $this->url ?? '#';
 
         if ($this->url_mode === false && $this->page_slug) {
-            return url("/{$this->page_slug}");
+            // Gunakan route yang sudah terdaftar jika ada, fallback ke /page/{slug}
+            try {
+                return route('bale.view-page', ['page' => $this->page_slug]);
+            } catch (\Exception) {
+                return url("/page/{$this->page_slug}");
+            }
         }
 
         // Validasi skema URL untuk mencegah javascript:, data:, vbscript: atau protokol eksternal tak dikenal
