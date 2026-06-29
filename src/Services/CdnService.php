@@ -20,12 +20,16 @@ class CdnService
     /**
      * Generate full URL ke aset.
      *
-     * org_slug diambil dari tabel options (key: organization_slug)
-     * agar konsisten dengan sumber data yang sebenarnya.
+     * Format dengan CDN aktif:
+     *   shared/logo.png    → {cdn_url}/{prefix}/shared/logo.png
+     *   images/foto.jpg    → {cdn_url}/{prefix}/{org_slug}/images/foto.jpg
      *
-     * Path 'shared/' tidak menyertakan org_slug:
-     *   url('shared/logo.png') → {base}/{prefix}/shared/logo.png
-     *   url('images/foto.jpg') → {base}/{prefix}/{org_slug}/images/foto.jpg
+     * Format ketika CDN tidak aktif (fallback ke asset() lokal):
+     *   shared/logo.png    → asset({prefix}/shared/logo.png)
+     *   images/foto.jpg    → asset({prefix}/{org_slug}/images/foto.jpg)
+     *
+     * Path prefix tidak pernah digandakan:
+     *   Jika path sudah dimulai dengan {prefix}/, path digunakan as-is.
      */
     public function url(string $path): string
     {
@@ -35,21 +39,29 @@ class CdnService
         $path = str_replace('\\', '/', $path);
         $path = preg_replace('#\.\.(/|$)#', '', $path);
 
-        if (! $this->isEnabled()) {
-            return asset($path);
+        // Cegah double-prefix: jika path sudah diawali dengan prefix/, gunakan as-is
+        if (str_starts_with($path, "{$this->prefix}/")) {
+            $fullPath = $path;
+            return $this->isEnabled()
+                ? "{$this->baseUrl}/{$fullPath}"
+                : asset($fullPath);
         }
 
         if (str_starts_with($path, 'shared/')) {
-            return "{$this->baseUrl}/{$this->prefix}/{$path}";
+            $fullPath = "{$this->prefix}/{$path}";
+            return $this->isEnabled()
+                ? "{$this->baseUrl}/{$fullPath}"
+                : asset($fullPath);
         }
 
-        $orgSlug = ltrim($this->orgSlug(), '/');
-
-        $fullPath = $orgSlug 
-            ? "{$this->prefix}/{$orgSlug}/{$path}" 
+        $orgSlug  = ltrim($this->orgSlug(), '/');
+        $fullPath = $orgSlug
+            ? "{$this->prefix}/{$orgSlug}/{$path}"
             : "{$this->prefix}/{$path}";
 
-        return "{$this->baseUrl}/" . ltrim($fullPath, '/');
+        return $this->isEnabled()
+            ? "{$this->baseUrl}/" . ltrim($fullPath, '/')
+            : asset($fullPath);
     }
 
     public function isEnabled(): bool
