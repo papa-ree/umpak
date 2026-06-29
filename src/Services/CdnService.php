@@ -31,6 +31,10 @@ class CdnService
     {
         $path = ltrim($path, '/');
 
+        // Bersihkan path dari directory traversal (.. atau \\)
+        $path = str_replace('\\', '/', $path);
+        $path = preg_replace('#\.\.(/|$)#', '', $path);
+
         if (! $this->isEnabled()) {
             return asset($path);
         }

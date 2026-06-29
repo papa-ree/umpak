@@ -2,6 +2,7 @@
 
 namespace Bale\Umpak\Support;
 
+use \Bale\Umpak\Support\Sanitizer;
 class EditorJsListRenderer
 {
     /**
@@ -18,17 +19,17 @@ class EditorJsListRenderer
         $html = '';
 
         foreach ($items as $item) {
-            $content     = is_array($item) ? ($item['content'] ?? '') : $item;
+            $content = is_array($item) ? ($item['content'] ?? '') : $item;
             $nestedItems = is_array($item) ? ($item['items'] ?? []) : [];
 
-            $html .= '<li class="leading-relaxed">'.$content;
+            $html .= '<li class="leading-relaxed">' . Sanitizer::cleanHtml($content);
 
-            if (! empty($nestedItems)) {
-                $tag   = $style === 'ordered' ? 'ol' : 'ul';
+            if (!empty($nestedItems)) {
+                $tag = $style === 'ordered' ? 'ol' : 'ul';
                 $class = $style === 'ordered' ? 'list-decimal' : 'list-disc';
-                $html .= '<'.$tag.' class="'.$class.' list-inside mt-2 space-y-2 ml-4">';
+                $html .= '<' . $tag . ' class="' . $class . ' list-inside mt-2 space-y-2 ml-4">';
                 $html .= self::render($nestedItems, $style);
-                $html .= '</'.$tag.'>';
+                $html .= '</' . $tag . '>';
             }
 
             $html .= '</li>';

@@ -130,7 +130,7 @@
                                 class="group relative flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all duration-200 hover:scale-110 hover:-translate-y-0.5 hover:bg-slate-800 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 shadow-sm border border-slate-200/50 dark:border-slate-600/50"
                             >
                                 <span class="w-[18px] h-[18px] flex items-center justify-center [&>svg]:w-[18px] [&>svg]:h-[18px]">
-                                    {!! $sm['icon'] !!}
+                                    {!! \Bale\Umpak\Support\Sanitizer::cleanSvg($sm['icon']) !!}
                                 </span>
                                 {{-- Tooltip --}}
                                 <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-semibold px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-xl border border-white/10 z-10">

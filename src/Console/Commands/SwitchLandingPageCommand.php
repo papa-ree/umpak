@@ -161,18 +161,35 @@ class SwitchLandingPageCommand extends Command
             return;
         }
 
-        $content = file_get_contents($envPath);
-
-        if (preg_match('/^ACTIVE_LANDING_PAGE=.*$/m', $content)) {
-            $content = preg_replace(
-                '/^ACTIVE_LANDING_PAGE=.*$/m',
-                "ACTIVE_LANDING_PAGE={$slug}",
-                $content
-            );
-        } else {
-            $content .= "\nACTIVE_LANDING_PAGE={$slug}\n";
+        // Membuat backup copy berkas .env sebelum modikasi
+        try {
+            $backupPath = $envPath . '.bak.' . date('YmdHis');
+            copy($envPath, $backupPath);
+        } catch (\Throwable) {
+            // Abaikan jika backup gagal agar command tetap bisa memproses .env utama
         }
 
-        file_put_contents($envPath, $content);
+        // Membuka file untuk read/write secara eksklusif (flock)
+        $file = fopen($envPath, 'r+');
+        if ($file && flock($file, LOCK_EX)) {
+            $content = stream_get_contents($file);
+
+            if (preg_match('/^ACTIVE_LANDING_PAGE=.*$/m', $content)) {
+                $content = preg_replace(
+                    '/^ACTIVE_LANDING_PAGE=.*$/m',
+                    "ACTIVE_LANDING_PAGE={$slug}",
+                    $content
+                );
+            } else {
+                $content .= "\nACTIVE_LANDING_PAGE={$slug}\n";
+            }
+
+            rewind($file);
+            ftruncate($file, 0);
+            fwrite($file, $content);
+
+            flock($file, LOCK_UN);
+            fclose($file);
+        }
     }
 }

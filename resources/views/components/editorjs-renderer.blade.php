@@ -2,6 +2,7 @@
 
 @php
     use Bale\Umpak\Support\EditorJsListRenderer;
+    use Bale\Umpak\Support\Sanitizer;
 
     $editorData = is_string($content) ? json_decode($content, true) : $content;
     $blocks     = $editorData['blocks'] ?? [];
@@ -33,17 +34,17 @@
             @case('header')
                 @php $level = $data['level'] ?? 2; $text = $data['text'] ?? ''; @endphp
                 @if($level == 1)
-                    <h1 class="text-4xl font-bold mb-6 mt-8 text-gray-900 dark:text-white">{!! $text !!}</h1>
+                    <h1 class="text-4xl font-bold mb-6 mt-8 text-gray-900 dark:text-white">{!! Sanitizer::cleanHtml($text) !!}</h1>
                 @elseif($level == 2)
-                    <h2 class="text-3xl font-bold mb-5 mt-7 text-gray-900 dark:text-white">{!! $text !!}</h2>
+                    <h2 class="text-3xl font-bold mb-5 mt-7 text-gray-900 dark:text-white">{!! Sanitizer::cleanHtml($text) !!}</h2>
                 @elseif($level == 3)
-                    <h3 class="text-2xl font-semibold mb-4 mt-6 text-gray-900 dark:text-white">{!! $text !!}</h3>
+                    <h3 class="text-2xl font-semibold mb-4 mt-6 text-gray-900 dark:text-white">{!! Sanitizer::cleanHtml($text) !!}</h3>
                 @elseif($level == 4)
-                    <h4 class="text-xl font-semibold mb-3 mt-5 text-gray-900 dark:text-white">{!! $text !!}</h4>
+                    <h4 class="text-xl font-semibold mb-3 mt-5 text-gray-900 dark:text-white">{!! Sanitizer::cleanHtml($text) !!}</h4>
                 @elseif($level == 5)
-                    <h5 class="text-lg font-semibold mb-3 mt-4 text-gray-900 dark:text-white">{!! $text !!}</h5>
+                    <h5 class="text-lg font-semibold mb-3 mt-4 text-gray-900 dark:text-white">{!! Sanitizer::cleanHtml($text) !!}</h5>
                 @else
-                    <h6 class="text-base font-semibold mb-2 mt-3 text-gray-900 dark:text-white">{!! $text !!}</h6>
+                    <h6 class="text-base font-semibold mb-2 mt-3 text-gray-900 dark:text-white">{!! Sanitizer::cleanHtml($text) !!}</h6>
                 @endif
                 @break
 
@@ -51,7 +52,7 @@
                 @php $text = $data['text'] ?? ''; @endphp
                 @if(! empty($text))
                     <p class="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed text-lg text-justify">
-                        {!! $text !!}
+                        {!! Sanitizer::cleanHtml($text) !!}
                     </p>
                 @endif
                 @break
@@ -87,7 +88,7 @@
                                     @endif
                                 </span>
                                 <span class="text-gray-700 dark:text-gray-300 text-lg {{ $checked ? 'line-through opacity-60' : '' }}">
-                                    {!! $text !!}
+                                    {!! Sanitizer::cleanHtml($text) !!}
                                 </span>
                             </li>
                         @endforeach
@@ -125,7 +126,7 @@
                                 @endif
                             </span>
                             <span class="text-gray-700 dark:text-gray-300 text-lg {{ $checked ? 'line-through opacity-60' : '' }}">
-                                {!! $text !!}
+                                {!! Sanitizer::cleanHtml($text) !!}
                             </span>
                         </li>
                     @endforeach
@@ -152,12 +153,12 @@
                             <img src="{{ $url }}"
                                  alt="{{ $caption }}"
                                  class="w-full h-auto"
-                                 loading="lazy"
+                                  loading="lazy"
                                  decoding="async">
                         </div>
                         @if($caption)
                             <figcaption class="text-center text-sm text-gray-500 dark:text-gray-400 mt-3">
-                                {!! $caption !!}
+                                {!! Sanitizer::cleanHtml($caption) !!}
                             </figcaption>
                         @endif
                     </figure>
@@ -215,7 +216,7 @@
 
             @case('raw')
                 <div class="raw-html-block mb-6">
-                    {!! $data['html'] ?? '' !!}
+                    {!! Sanitizer::cleanHtml($data['html'] ?? '', 'raw') !!}
                 </div>
                 @break
 
@@ -236,11 +237,11 @@
                         <div>
                             @if($warningTitle)
                                 <h4 class="font-semibold text-yellow-800 dark:text-yellow-200 mb-1">
-                                    {!! $warningTitle !!}
+                                    {!! Sanitizer::cleanHtml($warningTitle) !!}
                                 </h4>
                             @endif
                             <p class="text-yellow-700 dark:text-yellow-400">
-                                {!! $warningMessage !!}
+                                {!! Sanitizer::cleanHtml($warningMessage) !!}
                             </p>
                         </div>
                     </div>
@@ -264,7 +265,7 @@
                                         <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider
                                                    text-gray-900 dark:text-white
                                                    border-b border-gray-200 dark:border-gray-700">
-                                            {!! $cell !!}
+                                            {!! Sanitizer::cleanHtml($cell) !!}
                                         </th>
                                     @endforeach
                                 </tr>
@@ -275,7 +276,7 @@
                                         @foreach($row as $cell)
                                             <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300
                                                        border-b border-gray-100 dark:border-gray-800">
-                                                {!! empty($cell) ? '&nbsp;' : $cell !!}
+                                                {!! empty($cell) ? '&nbsp;' : Sanitizer::cleanHtml($cell) !!}
                                             </td>
                                         @endforeach
                                     </tr>
@@ -288,7 +289,7 @@
                                         @foreach($row as $cell)
                                             <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300
                                                        border-b border-gray-100 dark:border-gray-800">
-                                                {!! empty($cell) ? '&nbsp;' : $cell !!}
+                                                {!! empty($cell) ? '&nbsp;' : Sanitizer::cleanHtml($cell) !!}
                                             </td>
                                         @endforeach
                                     </tr>
@@ -318,7 +319,7 @@
                         </div>
                         @if($embedCaption)
                             <figcaption class="text-center text-sm text-gray-600 dark:text-gray-400 mt-3">
-                                {!! $embedCaption !!}
+                                {!! Sanitizer::cleanHtml($embedCaption) !!}
                             </figcaption>
                         @endif
                     </figure>

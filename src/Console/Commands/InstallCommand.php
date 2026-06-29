@@ -52,29 +52,35 @@ class InstallCommand extends Command
                 return;
             }
 
-            $existing = file_get_contents($envPath);
+            // Membuka file dengan mode read/write dan melakukan locking eksklusif
+            $file = fopen($envPath, 'r+');
+            if ($file && flock($file, LOCK_EX)) {
+                $existing = stream_get_contents($file);
 
-            $variables = [
-                'UMPAK_CDN_ENABLED' => 'false',
-                'UMPAK_CDN_URL' => '',
-                'UMPAK_CDN_PREFIX' => 'bale',
-                'UMPAK_BALYSTICS_ID' => '',
-                'ACTIVE_LANDING_PAGE' => '',
-            ];
+                $variables = [
+                    'UMPAK_CDN_ENABLED' => 'false',
+                    'UMPAK_CDN_URL' => '',
+                    'UMPAK_CDN_PREFIX' => 'bale',
+                    'UMPAK_BALYSTICS_ID' => '',
+                    'ACTIVE_LANDING_PAGE' => '',
+                ];
 
-            $toAppend = '';
+                $toAppend = '';
 
-            foreach ($variables as $key => $value) {
-                if (!str_contains($existing, $key)) {
-                    $toAppend .= "\n{$key}={$value}";
+                foreach ($variables as $key => $value) {
+                    if (!str_contains($existing, $key)) {
+                        $toAppend .= "\n{$key}={$value}";
+                    }
                 }
-            }
 
-            if ($toAppend !== '') {
-                file_put_contents(
-                    $envPath,
-                    $existing . "\n# bale/umpak" . $toAppend . "\n"
-                );
+                if ($toAppend !== '') {
+                    rewind($file);
+                    ftruncate($file, 0);
+                    fwrite($file, $existing . "\n# bale/umpak" . $toAppend . "\n");
+                }
+
+                flock($file, LOCK_UN);
+                fclose($file);
             }
         });
     }

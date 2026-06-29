@@ -84,15 +84,23 @@ class Navigation extends Model
      */
     public function resolveUrl(): string
     {
-        if ($this->url_mode === true) {
-            return $this->url ?? '#';
-        }
+        $url = $this->url ?? '#';
 
         if ($this->url_mode === false && $this->page_slug) {
             return url("/{$this->page_slug}");
         }
 
-        return $this->url ?? '#';
+        // Validasi skema URL untuk mencegah javascript:, data:, vbscript: atau protokol eksternal tak dikenal
+        $scheme = strtolower(parse_url($url, PHP_URL_SCHEME) ?? '');
+        if ($scheme && !in_array($scheme, ['http', 'https'])) {
+            return '#';
+        }
+
+        if (preg_match('/^\s*(javascript|data|vbscript):/i', $url)) {
+            return '#';
+        }
+
+        return $url;
     }
 
     /**
