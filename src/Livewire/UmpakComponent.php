@@ -101,4 +101,24 @@ abstract class UmpakComponent extends Component
     {
         return app(PostRepositoryInterface::class)->suggested($limit);
     }
+
+    /**
+     * Menghalangi/memblokir skema URL berbahaya (seperti javascript:, data:, vbscript:)
+     * dari input URL dinamis CMS.
+     */
+    protected static function safeUrl(string $rawUrl): string
+    {
+        $rawUrl = trim($rawUrl);
+
+        if ($rawUrl === '' || $rawUrl === '#') {
+            return '#';
+        }
+
+        // Block dangerous URI schemes
+        if (preg_match('/^\s*(javascript|data|vbscript)\s*:/i', $rawUrl)) {
+            return '#';
+        }
+
+        return str_starts_with($rawUrl, 'http') ? $rawUrl : url($rawUrl);
+    }
 }

@@ -16,6 +16,7 @@ class InstallCommand extends Command
 
         $this->publishConfig();
         $this->addEnvVariables();
+        $this->registerMiddleware();
 
         $this->newLine();
         $this->components->info('bale/umpak installed successfully.');
@@ -82,6 +83,35 @@ class InstallCommand extends Command
                 flock($file, LOCK_UN);
                 fclose($file);
             }
+        });
+    }
+
+    private function registerMiddleware(): void
+    {
+        $this->components->task('Registering SecurityHeaders middleware', function () {
+            $bootstrapPath = base_path('bootstrap/app.php');
+
+            if (!file_exists($bootstrapPath)) {
+                return false;
+            }
+
+            $content = file_get_contents($bootstrapPath);
+
+            // Jika sudah terdaftar, lewati
+            if (str_contains($content, 'SecurityHeaders::class')) {
+                return true;
+            }
+
+            // Pola untuk mencocokkan ->withMiddleware(...)
+            $pattern = '/(->withMiddleware\s*\(\s*function\s*\(\s*Middleware\s*\$middleware\s*\)(?:\s*:\s*void)?\s*\{)/i';
+
+            if (preg_match($pattern, $content)) {
+                $newContent = preg_replace($pattern, "$1\n        \$middleware->append(\\Bale\\Umpak\\Http\\Middleware\\SecurityHeaders::class);", $content);
+                file_put_contents($bootstrapPath, $newContent);
+                return true;
+            }
+
+            return false;
         });
     }
 }
