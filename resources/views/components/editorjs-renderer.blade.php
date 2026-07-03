@@ -9,13 +9,13 @@
 @endphp
 
 <style>
-    .editorjs-content a:not(.group):not(.flex) {
+    .editorjs-content a:not(.group):not(.flex):not(.no-underline) {
         text-decoration: underline;
         text-underline-offset: 4px;
         text-decoration-thickness: 1px;
         transition: all 300ms ease-in-out;
     }
-    .editorjs-content a:not(.group):not(.flex):hover {
+    .editorjs-content a:not(.group):not(.flex):not(.no-underline):hover {
         text-decoration: underline wavy;
         text-decoration-thickness: 1.5px;
         color: #3b82f6;
@@ -250,9 +250,21 @@
 
             @case('table')
                 @php
-                    $tableContent  = $data['content'] ?? [];
-                    $withHeadings  = $data['withHeadings'] ?? false;
+                    $tableContent   = $data['content'] ?? [];
+                    $withHeadings   = $data['withHeadings'] ?? false;
                     $tableStretched = $data['stretched'] ?? false;
+
+                    /**
+                     * Cek apakah sebuah cell mengandung tag <a> (hyperlink).
+                     * Jika ya, cell tersebut akan dirender sebagai tombol bergaya.
+                     */
+                    $cellHasLink = fn(string $cell): bool => (bool) preg_match('/<a\s[^>]*href/i', $cell);
+
+                    /**
+                     * Tentukan indeks kolom terakhir dari baris pertama data
+                     * untuk keperluan deteksi kolom "aksi" (paling kanan).
+                     */
+                    $lastColIndex = count($tableContent[0] ?? []) - 1;
                 @endphp
                 <div class="mb-8 overflow-x-auto rounded-xl
                             border border-gray-200 dark:border-gray-700
@@ -261,10 +273,11 @@
                         @if($withHeadings && count($tableContent) > 0)
                             <thead class="bg-gray-50 dark:bg-gray-800/50">
                                 <tr>
-                                    @foreach($tableContent[0] as $cell)
-                                        <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider
+                                    @foreach($tableContent[0] as $colIdx => $cell)
+                                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider
                                                    text-gray-900 dark:text-white
-                                                   border-b border-gray-200 dark:border-gray-700">
+                                                   border-b border-gray-200 dark:border-gray-700
+                                                   {{ $colIdx === $lastColIndex ? 'text-right' : 'text-left' }}">
                                             {!! Sanitizer::cleanHtml($cell) !!}
                                         </th>
                                     @endforeach
@@ -273,10 +286,45 @@
                             <tbody class="bg-white dark:bg-gray-900">
                                 @foreach(array_slice($tableContent, 1) as $row)
                                     <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                                        @foreach($row as $cell)
+                                        @foreach($row as $colIdx => $cell)
+                                            @php
+                                                $isLastCol  = $colIdx === $lastColIndex;
+                                                $isLinkCell = $isLastCol && !empty($cell) && $cellHasLink($cell);
+                                            @endphp
                                             <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300
-                                                       border-b border-gray-100 dark:border-gray-800">
-                                                {!! empty($cell) ? '&nbsp;' : Sanitizer::cleanHtml($cell) !!}
+                                                       border-b border-gray-100 dark:border-gray-800
+                                                       {{ $isLastCol ? 'text-right' : '' }}">
+                                                @if($isLinkCell)
+                                                    @php
+                                                        // Ekstrak href dan label dari tag <a> pertama yang ditemukan
+                                                        preg_match('/<a\s[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)<\/a>/is', $cell, $linkMatch);
+                                                        $linkHref  = Sanitizer::safeUrl($linkMatch[1] ?? '');
+                                                        $linkLabel = strip_tags($linkMatch[2] ?? 'Unduh');
+                                                    @endphp
+                                                    <a href="{{ $linkHref }}"
+                                                       target="_blank"
+                                                       rel="noopener noreferrer"
+                                                       class="inline-flex items-center gap-2
+                                                              px-5 py-2.5 rounded-xl font-semibold
+                                                              text-xs md:text-sm
+                                                              text-gray-700 dark:text-gray-300
+                                                              bg-gray-200 dark:bg-slate-800/60
+                                                              border border-transparent
+                                                              hover:bg-gray-300 dark:hover:bg-slate-700
+                                                              hover:border-gray-300 dark:hover:border-slate-600
+                                                              transition-all duration-300
+                                                              no-underline
+                                                              group/tablelink">
+                                                        <svg class="w-4 h-4 transition-transform group-hover/tablelink:translate-x-0.5 group-hover/tablelink:-translate-y-0.5"
+                                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                                        </svg>
+                                                        <span>{{ $linkLabel }}</span>
+                                                    </a>
+                                                @else
+                                                    {!! empty($cell) ? '&nbsp;' : Sanitizer::cleanHtml($cell) !!}
+                                                @endif
                                             </td>
                                         @endforeach
                                     </tr>
@@ -286,10 +334,45 @@
                             <tbody class="bg-white dark:bg-gray-900">
                                 @foreach($tableContent as $row)
                                     <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                                        @foreach($row as $cell)
+                                        @foreach($row as $colIdx => $cell)
+                                            @php
+                                                $isLastCol  = $colIdx === $lastColIndex;
+                                                $isLinkCell = $isLastCol && !empty($cell) && $cellHasLink($cell);
+                                            @endphp
                                             <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300
-                                                       border-b border-gray-100 dark:border-gray-800">
-                                                {!! empty($cell) ? '&nbsp;' : Sanitizer::cleanHtml($cell) !!}
+                                                       border-b border-gray-100 dark:border-gray-800
+                                                       {{ $isLastCol ? 'text-right' : '' }}">
+                                                @if($isLinkCell)
+                                                    @php
+                                                        preg_match('/<a\s[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)<\/a>/is', $cell, $linkMatch);
+                                                        $linkHref  = Sanitizer::safeUrl($linkMatch[1] ?? '');
+                                                        $linkLabel = strip_tags($linkMatch[2] ?? 'Unduh');
+                                                    @endphp
+                                                    <a href="{{ $linkHref }}"
+                                                       target="_blank"
+                                                       rel="noopener noreferrer"
+                                                       class="inline-flex items-center gap-2
+                                                              px-5 py-2.5 rounded-xl font-semibold
+                                                              text-xs md:text-sm
+                                                              text-gray-700 dark:text-gray-300
+                                                              bg-gray-200 dark:bg-slate-800/60
+                                                              border border-transparent
+                                                              hover:bg-gray-300 dark:hover:bg-slate-700
+                                                              hover:border-gray-300 dark:hover:border-slate-600
+                                                              transition-all duration-300
+                                                              no-underline
+                                                              group/tablelink">
+                                                        {{-- icon --}}
+                                                        {{-- <svg class="w-4 h-4 transition-transform group-hover/tablelink:translate-x-0.5 group-hover/tablelink:-translate-y-0.5"
+                                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                                        </svg> --}}
+                                                        <span>{{ $linkLabel }}</span>
+                                                    </a>
+                                                @else
+                                                    {!! empty($cell) ? '&nbsp;' : Sanitizer::cleanHtml($cell) !!}
+                                                @endif
                                             </td>
                                         @endforeach
                                     </tr>

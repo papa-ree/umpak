@@ -242,4 +242,32 @@ class Sanitizer
 
         return false;
     }
+
+    /**
+     * Pastikan sebuah URL aman digunakan sebagai nilai atribut href/src.
+     *
+     * - Hanya mengizinkan scheme http:// dan https://
+     * - URL relatif yang dimulai dengan '/' atau '#' diizinkan
+     * - Semua scheme berbahaya (javascript:, data:, vbscript:, dll) dikembalikan '#'
+     */
+    public static function safeUrl(?string $url, string $fallback = '#'): string
+    {
+        if (empty($url)) {
+            return $fallback;
+        }
+
+        $url = trim($url);
+
+        // Izinkan URL relatif (dimulai '/', '#', atau './') tanpa scheme
+        if (preg_match('/^(\/|#|\.\/|\.\.\/)/i', $url)) {
+            return $url;
+        }
+
+        // Blok semua scheme selain http & https
+        if (!preg_match('/^https?:\/\//i', $url)) {
+            return $fallback;
+        }
+
+        return $url;
+    }
 }
