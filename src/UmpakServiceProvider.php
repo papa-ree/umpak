@@ -40,8 +40,40 @@ class UmpakServiceProvider extends ServiceProvider
         $this->app->bind(NavigationRepositoryInterface::class, NavigationRepository::class);
         $this->app->bind(OptionRepositoryInterface::class, OptionRepository::class);
 
+        $this->configureCachePrefix();
+
         // TODO: Tahap 4 — bind SitemapService
         // $this->app->singleton(SitemapService::class);
+    }
+
+    /**
+     * Dapatkan dan sesuaikan prefix cache/redis serta session cookie 
+     * secara dinamis berdasarkan landing page yang aktif. Ini mencegah
+     * tabrakan key pada shared Redis yang digunakan oleh beberapa bale.
+     */
+    private function configureCachePrefix(): void
+    {
+        $active = config('umpak.landing_page.active');
+
+        if ($active) {
+            // Isolasi Cache Prefix
+            $cachePrefix = config('cache.prefix');
+            if ($cachePrefix && !str_contains($cachePrefix, $active)) {
+                config(['cache.prefix' => rtrim($cachePrefix, '_-') . '_' . $active]);
+            }
+
+            // Isolasi Redis Prefix
+            $redisPrefix = config('database.redis.options.prefix');
+            if ($redisPrefix && !str_contains($redisPrefix, $active)) {
+                config(['database.redis.options.prefix' => rtrim($redisPrefix, '_-') . '_' . $active . ':']);
+            }
+
+            // Isolasi Session Cookie
+            $sessionCookie = config('session.cookie');
+            if ($sessionCookie && !str_contains($sessionCookie, $active)) {
+                config(['session.cookie' => rtrim($sessionCookie, '_-') . '_' . $active]);
+            }
+        }
     }
 
     public function boot(): void
@@ -93,7 +125,27 @@ class UmpakServiceProvider extends ServiceProvider
 
     private function registerViewComposers(): void
     {
-        View::composer('*', LandingPageComposer::class);
+        // Hanya attach ke views namespace umpak sendiri (bukan semua view).
+        // Theme packages harus memanggil View::composer() sendiri di dalam
+        // blok isActiveLandingPage() mereka agar tidak mempengaruhi bale lain.
+        View::composer('umpak::*', LandingPageComposer::class);
+    }
+
+    /**
+     * Utility untuk digunakan oleh theme ServiceProviders yang ingin
+     * menginject $umpakOrg + $umpakNav ke view mereka.
+     *
+     * Panggil ini **di dalam** blok isActiveLandingPage() di boot() theme:
+     *
+     *   if ($this->isActiveLandingPage()) {
+     *       $this->app->booted(fn () => $this->registerLandingPageComposer('bale-dindik::*'));
+     *   }
+     *
+     * @param string $viewPattern Pola view yang akan di-compose, misal: 'bale-dindik::*'
+     */
+    public static function registerLandingPageComposer(string $viewPattern): void
+    {
+        \Illuminate\Support\Facades\View::composer($viewPattern, LandingPageComposer::class);
     }
 
     private function registerCommands(): void
