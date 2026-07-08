@@ -55,6 +55,10 @@ class FloatingContact extends UmpakComponent
 
         // Kumpulkan info kontak berdasarkan meta.order
         foreach ($order as $field) {
+            // Jangan masukkan key sosial media (berawalan sm_) ke info kontak
+            if (str_starts_with($field, 'sm_')) {
+                continue;
+            }
             $raw = $val($contact[$field] ?? null);
             if ($raw) {
                 $this->contactInfos[$field] = $raw;
