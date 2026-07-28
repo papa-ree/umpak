@@ -86,8 +86,8 @@ class PostRepository implements PostRepositoryInterface
         if ($keyword) {
             $keyword = addcslashes($keyword, '%_');
             $query->where(function ($q) use ($keyword) {
-                $q->where('title', 'like', '%' . $keyword . '%', '\\')
-                  ->orWhere('content', 'like', '%' . $keyword . '%', '\\');
+                $q->where('title', 'like', '%' . $keyword . '%')
+                  ->orWhere('content', 'like', '%' . $keyword . '%');
             });
         }
 
