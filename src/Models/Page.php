@@ -4,7 +4,6 @@ namespace Bale\Umpak\Models;
 
 use Bale\Umpak\Concerns\InteractsWithSeo;
 use Bale\Umpak\DTOs\PageData;
-use Illuminate\Database\Eloquent\Model;
 
 /**
  * Model Page.
@@ -28,7 +27,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property \Carbon\Carbon              $created_at
  * @property \Carbon\Carbon              $updated_at
  */
-class Page extends Model
+class Page extends UmpakModel
 {
     use InteractsWithSeo;
 

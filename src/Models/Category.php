@@ -3,7 +3,6 @@
 namespace Bale\Umpak\Models;
 
 use Bale\Umpak\Concerns\InteractsWithSeo;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -20,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $name
  * @property string $slug
  */
-class Category extends Model
+class Category extends UmpakModel
 {
     use InteractsWithSeo;
 

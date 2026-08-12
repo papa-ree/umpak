@@ -2,8 +2,6 @@
 
 namespace Bale\Umpak\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
 /**
  * Model Option — key-value store konfigurasi organisasi.
  *
@@ -36,7 +34,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  */
-class Option extends Model
+class Option extends UmpakModel
 {
     protected $keyType = 'string';
 

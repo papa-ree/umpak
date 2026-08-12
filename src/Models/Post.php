@@ -4,7 +4,6 @@ namespace Bale\Umpak\Models;
 
 use Bale\Umpak\Concerns\InteractsWithSeo;
 use Bale\Umpak\DTOs\PostData;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -40,7 +39,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \Carbon\Carbon              $created_at
  * @property \Carbon\Carbon              $updated_at
  */
-class Post extends Model
+class Post extends UmpakModel
 {
     use SoftDeletes, InteractsWithSeo;
 

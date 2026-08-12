@@ -3,7 +3,6 @@
 namespace Bale\Umpak\Models;
 
 use Bale\Umpak\DTOs\SectionData;
-use Illuminate\Database\Eloquent\Model;
 
 /**
  * Model Section.
@@ -40,7 +39,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property \Carbon\Carbon        $created_at
  * @property \Carbon\Carbon        $updated_at
  */
-class Section extends Model
+class Section extends UmpakModel
 {
     protected $keyType = 'string';
 

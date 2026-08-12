@@ -59,6 +59,7 @@ class InstallCommand extends Command
                 $existing = stream_get_contents($file);
 
                 $variables = [
+                    'UMPAK_DB_CONNECTION' => 'mysql',
                     'UMPAK_CDN_ENABLED' => 'false',
                     'UMPAK_CDN_URL' => '',
                     'UMPAK_CDN_PREFIX' => 'bale',

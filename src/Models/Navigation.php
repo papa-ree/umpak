@@ -2,7 +2,6 @@
 
 namespace Bale\Umpak\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -32,7 +31,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null  $parent_id
  * @property string|null  $page_slug
  */
-class Navigation extends Model
+class Navigation extends UmpakModel
 {
     protected $keyType = 'string';
 

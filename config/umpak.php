@@ -4,6 +4,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Database Connection
+    |--------------------------------------------------------------------------
+    |
+    | Koneksi database yang dipakai oleh seluruh model Umpak.
+    | Default 'mysql'. Ganti ke nama connection lain yang terdaftar
+    | di config/database.php (misal 'pgsql', 'mariadb').
+    |
+    */
+
+    'database' => [
+        'connection' => env('UMPAK_DB_CONNECTION', 'mysql'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | CDN
     |--------------------------------------------------------------------------
     |
