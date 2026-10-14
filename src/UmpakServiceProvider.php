@@ -6,11 +6,15 @@ use Bale\Umpak\Concerns\HasLivewireComponents;
 use Bale\Umpak\Console\Commands\InstallCommand;
 use Bale\Umpak\Console\Commands\MakeCommand;
 use Bale\Umpak\Console\Commands\SwitchLandingPageCommand;
+use Bale\Umpak\Contracts\AgendaRepositoryInterface;
+use Bale\Umpak\Contracts\AnnouncementRepositoryInterface;
 use Bale\Umpak\Contracts\NavigationRepositoryInterface;
 use Bale\Umpak\Contracts\OptionRepositoryInterface;
 use Bale\Umpak\Contracts\PageRepositoryInterface;
 use Bale\Umpak\Contracts\PostRepositoryInterface;
 use Bale\Umpak\Contracts\SectionRepositoryInterface;
+use Bale\Umpak\Repositories\AgendaRepository;
+use Bale\Umpak\Repositories\AnnouncementRepository;
 use Bale\Umpak\Repositories\NavigationRepository;
 use Bale\Umpak\Repositories\OptionRepository;
 use Bale\Umpak\Repositories\PageRepository;
@@ -39,6 +43,8 @@ class UmpakServiceProvider extends ServiceProvider
         $this->app->bind(PageRepositoryInterface::class, PageRepository::class);
         $this->app->bind(NavigationRepositoryInterface::class, NavigationRepository::class);
         $this->app->bind(OptionRepositoryInterface::class, OptionRepository::class);
+        $this->app->bind(AgendaRepositoryInterface::class, AgendaRepository::class);
+        $this->app->bind(AnnouncementRepositoryInterface::class, AnnouncementRepository::class);
 
         $this->configureCachePrefix();
 
@@ -47,7 +53,7 @@ class UmpakServiceProvider extends ServiceProvider
     }
 
     /**
-     * Dapatkan dan sesuaikan prefix cache/redis serta session cookie 
+     * Dapatkan dan sesuaikan prefix cache/redis serta session cookie
      * secara dinamis berdasarkan landing page yang aktif. Ini mencegah
      * tabrakan key pada shared Redis yang digunakan oleh beberapa bale.
      */

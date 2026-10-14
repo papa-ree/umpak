@@ -2,7 +2,7 @@
 
 namespace Bale\Umpak\Concerns;
 
-use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
  * Trait InteractsWithSeo
@@ -16,14 +16,17 @@ trait InteractsWithSeo
      * Relasi ke metadata SEO (Polymorphic).
      * Jika bale/seo tidak terinstall, akan merender relasi kosong.
      */
-    public function seoMeta(): MorphOne
+    public function seoMeta(): Relation
     {
         if (class_exists('Bale\Seo\Models\SeoMeta')) {
             return $this->morphOne('Bale\Seo\Models\SeoMeta', 'seoable');
         }
 
-        // Return empty relation if SEO package is missing
-        return $this->morphOne(static::class, 'id')->whereRaw('1=0');
+        // Relasi kosong bila package SEO tidak terpasang.
+        // Tidak memakai morphOne() karena kolom morph (seoable_*) belum tentu ada,
+        // cukup relasi hasOne ke primary key sendiri yang dijamin tidak match.
+        return $this->hasOne(static::class, $this->getKeyName(), $this->getKeyName())
+            ->whereRaw('1=0');
     }
 
     /**

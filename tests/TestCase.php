@@ -5,6 +5,7 @@ namespace Bale\Umpak\Tests;
 use Bale\Umpak\UmpakServiceProvider;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
@@ -12,6 +13,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
+            LivewireServiceProvider::class,
             UmpakServiceProvider::class,
         ];
     }
@@ -42,6 +44,8 @@ class TestCase extends Orchestra
                 'collation' => 'utf8mb4_unicode_ci',
                 'prefix'    => '',
             ]);
+
+            config()->set('umpak.database.connection', 'mysql');
         } else {
             config()->set('database.default', 'testing');
             config()->set('database.connections.testing', [
@@ -49,6 +53,10 @@ class TestCase extends Orchestra
                 'database' => ':memory:',
                 'prefix'   => '',
             ]);
+
+            // UmpakModel::getConnectionName() membaca config umpak.database.connection,
+            // jadi arahkan ke koneksi 'testing' saat suite berjalan di SQLite.
+            config()->set('umpak.database.connection', 'testing');
         }
     }
 
@@ -133,11 +141,42 @@ class TestCase extends Orchestra
             $table->uuid('page_slug')->nullable();
             $table->timestamps();
         });
+
+        Schema::create('agendas', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->string('location')->nullable();
+            $table->timestamp('start_date');
+            $table->timestamp('end_date')->nullable();
+            $table->string('category')->nullable();
+            $table->boolean('is_visible')->default(true);
+            $table->boolean('all_day')->default(false);
+            $table->string('timezone')->nullable();
+            $table->boolean('is_recurring')->default(false);
+            $table->string('rrule')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('announcements', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('title');
+            $table->string('slug')->unique();
+            $table->json('content')->nullable();
+            $table->string('attachment')->nullable();
+            $table->boolean('is_pinned')->default(false);
+            $table->boolean('published')->default(false);
+            $table->timestamp('start_date')->nullable();
+            $table->timestamp('end_date')->nullable();
+            $table->timestamps();
+        });
     }
 
     private function dropTables(): void
     {
         // Urutan penting — foreign key constraint
+        Schema::dropIfExists('announcements');
+        Schema::dropIfExists('agendas');
         Schema::dropIfExists('navigations');
         Schema::dropIfExists('posts');
         Schema::dropIfExists('pages');

@@ -1,8 +1,11 @@
 <?php
 
+use Bale\Umpak\DTOs\AgendaData;
+use Bale\Umpak\DTOs\AnnouncementData;
 use Bale\Umpak\DTOs\PageData;
 use Bale\Umpak\DTOs\PostData;
 use Bale\Umpak\DTOs\SectionData;
+use Carbon\Carbon;
 
 describe('SectionData', function () {
 
@@ -68,8 +71,8 @@ describe('PostData', function () {
             'content' => ['blocks' => [['type' => 'paragraph']]],
             'thumbnail' => 'https://cdn.example.com/img.jpg',
             'categorySlug' => 'umum',
-            'publishedAt' => \Carbon\Carbon::parse('2025-05-01'),
-            'updatedAt' => \Carbon\Carbon::parse('2025-05-02'),
+            'publishedAt' => Carbon::parse('2025-05-01'),
+            'updatedAt' => Carbon::parse('2025-05-02'),
         ];
 
         $data = array_merge($defaults, $overrides);
@@ -119,7 +122,7 @@ describe('PostData', function () {
     });
 
     it('formattedDate() returns localized date string', function () {
-        $dto = makePostData(['publishedAt' => \Carbon\Carbon::parse('2025-05-01')]);
+        $dto = makePostData(['publishedAt' => Carbon::parse('2025-05-01')]);
 
         expect($dto->formattedDate('Y-m-d'))->toBe('2025-05-01');
     });
@@ -135,16 +138,194 @@ describe('PageData', function () {
             title: 'Tentang Kami',
             type: 'paragraph',
             content: null,
-            updatedAt: \Carbon\Carbon::now(),
+            updatedAt: Carbon::now(),
         );
 
         expect($dto->slug)->toBe('tentang-kami');
     });
 
     it('hasContent() returns false when content is null', function () {
-        $dto = new PageData('1', 'slug', 'Title', 'paragraph', null, \Carbon\Carbon::now());
+        $dto = new PageData('1', 'slug', 'Title', 'paragraph', null, Carbon::now());
 
         expect($dto->hasContent())->toBeFalse();
+    });
+
+});
+
+describe('AgendaData', function () {
+
+    function makeAgendaData(array $overrides = []): AgendaData
+    {
+        $defaults = [
+            'id' => '1',
+            'title' => 'Rapat Koordinasi',
+            'description' => 'Deskripsi',
+            'location' => 'Aula',
+            'startDate' => Carbon::parse('2025-05-12 09:00:00'),
+            'endDate' => Carbon::parse('2025-05-12 11:00:00'),
+            'category' => 'rapat',
+            'isVisible' => true,
+            'allDay' => false,
+            'timezone' => 'Asia/Jakarta',
+            'isRecurring' => false,
+            'rrule' => null,
+        ];
+
+        $data = array_merge($defaults, $overrides);
+
+        return new AgendaData(
+            id: $data['id'],
+            title: $data['title'],
+            description: $data['description'],
+            location: $data['location'],
+            startDate: $data['startDate'],
+            endDate: $data['endDate'],
+            category: $data['category'],
+            isVisible: $data['isVisible'],
+            allDay: $data['allDay'],
+            timezone: $data['timezone'],
+            isRecurring: $data['isRecurring'],
+            rrule: $data['rrule'],
+            createdAt: Carbon::parse('2025-05-01'),
+            updatedAt: Carbon::parse('2025-05-02'),
+        );
+    }
+
+    it('can be constructed and accessed', function () {
+        $dto = makeAgendaData();
+
+        expect($dto->title)->toBe('Rapat Koordinasi')
+            ->and($dto->category)->toBe('rapat');
+    });
+
+    it('formattedDate() returns localized date string', function () {
+        $dto = makeAgendaData(['startDate' => Carbon::parse('2025-05-12 09:00:00')]);
+
+        expect($dto->formattedDate('Y-m-d'))->toBe('2025-05-12');
+    });
+
+    it('formattedStartTime() is empty when all_day', function () {
+        $dto = makeAgendaData(['allDay' => true]);
+
+        expect($dto->formattedStartTime())->toBe('');
+    });
+
+    it('isMultiDay() returns true for different days', function () {
+        $dto = makeAgendaData([
+            'startDate' => Carbon::parse('2025-05-12 09:00:00'),
+            'endDate' => Carbon::parse('2025-05-14 15:00:00'),
+        ]);
+
+        expect($dto->isMultiDay())->toBeTrue();
+    });
+
+    it('isMultiDay() returns false for same day', function () {
+        $dto = makeAgendaData();
+
+        expect($dto->isMultiDay())->toBeFalse();
+    });
+
+    it('hasEnded() returns true for past agenda', function () {
+        $dto = makeAgendaData([
+            'startDate' => Carbon::parse('2020-01-01 09:00:00'),
+            'endDate' => Carbon::parse('2020-01-01 11:00:00'),
+        ]);
+
+        expect($dto->hasEnded())->toBeTrue();
+    });
+
+});
+
+describe('AnnouncementData', function () {
+
+    function makeAnnouncementData(array $overrides = []): AnnouncementData
+    {
+        $defaults = [
+            'id' => '1',
+            'slug' => 'pengumuman-test',
+            'title' => 'Pengumuman Test',
+            'excerpt' => 'Ringkasan pengumuman',
+            'content' => ['blocks' => [['type' => 'paragraph']]],
+            'attachment' => 'https://cdn.example.com/attachments/doc.pdf',
+            'isPinned' => false,
+            'published' => true,
+            'startDate' => Carbon::parse('2025-05-01'),
+            'endDate' => null,
+        ];
+
+        $data = array_merge($defaults, $overrides);
+
+        return new AnnouncementData(
+            id: $data['id'],
+            slug: $data['slug'],
+            title: $data['title'],
+            excerpt: $data['excerpt'],
+            content: $data['content'],
+            attachment: $data['attachment'],
+            isPinned: $data['isPinned'],
+            published: $data['published'],
+            startDate: $data['startDate'],
+            endDate: $data['endDate'],
+            createdAt: Carbon::parse('2025-05-01'),
+            updatedAt: Carbon::parse('2025-05-02'),
+        );
+    }
+
+    it('can be constructed and accessed', function () {
+        $dto = makeAnnouncementData();
+
+        expect($dto->title)->toBe('Pengumuman Test')
+            ->and($dto->slug)->toBe('pengumuman-test');
+    });
+
+    it('hasContent() returns true when blocks exist', function () {
+        $dto = makeAnnouncementData(['content' => ['blocks' => [['type' => 'paragraph']]]]);
+
+        expect($dto->hasContent())->toBeTrue();
+    });
+
+    it('hasContent() returns false when content is null', function () {
+        $dto = makeAnnouncementData(['content' => null]);
+
+        expect($dto->hasContent())->toBeFalse();
+    });
+
+    it('hasAttachment() returns true when attachment set', function () {
+        $dto = makeAnnouncementData();
+
+        expect($dto->hasAttachment())->toBeTrue();
+    });
+
+    it('hasAttachment() returns false when attachment is null', function () {
+        $dto = makeAnnouncementData(['attachment' => null]);
+
+        expect($dto->hasAttachment())->toBeFalse();
+    });
+
+    it('isActive() returns true when published within window', function () {
+        $dto = makeAnnouncementData([
+            'published' => true,
+            'startDate' => Carbon::now()->subDay(),
+            'endDate' => Carbon::now()->addDay(),
+        ]);
+
+        expect($dto->isActive())->toBeTrue();
+    });
+
+    it('isActive() returns false when unpublished', function () {
+        $dto = makeAnnouncementData(['published' => false]);
+
+        expect($dto->isActive())->toBeFalse();
+    });
+
+    it('isActive() returns false when past end date', function () {
+        $dto = makeAnnouncementData([
+            'published' => true,
+            'startDate' => Carbon::parse('2020-01-01'),
+            'endDate' => Carbon::parse('2020-02-01'),
+        ]);
+
+        expect($dto->isActive())->toBeFalse();
     });
 
 });
