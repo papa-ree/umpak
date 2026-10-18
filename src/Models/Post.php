@@ -88,12 +88,36 @@ class Post extends UmpakModel
             title: $this->title,
             excerpt: $this->getExcerpt(),
             content: $this->content,
-            thumbnail: $this->thumbnail ? cdn_asset('thumbnails/' . $this->thumbnail) : null,
+            thumbnail: $this->resolveThumbnail(),
             categorySlug: $this->category_slug,
             publishedAt: $this->published_at ?? $this->created_at,
             updatedAt: $this->updated_at,
             seo: $this->seoMeta,
         );
+    }
+
+    /**
+     * Normalisasi thumbnail menjadi full URL siap pakai untuk <img src>.
+     *
+     * Dua format data didukung:
+     * - URL absolut (mis. hasil impor dari CMS lama/WordPress) → dipakai apa adanya.
+     * - Nama file relatif (mis. "dinas-pendidikan-xxx.jpg") → di-resolve ke
+     *   CDN pada folder `thumbnails/`.
+     *
+     * Sejalan dengan InteractsWithSeo::getOgImage() dan bale-seo
+     * HasSeoMeta::getOgImage() yang juga tidak menggandakan path untuk URL absolut.
+     */
+    protected function resolveThumbnail(): ?string
+    {
+        if (empty($this->thumbnail)) {
+            return null;
+        }
+
+        if (str_starts_with($this->thumbnail, 'http')) {
+            return $this->thumbnail;
+        }
+
+        return cdn_asset('thumbnails/' . ltrim($this->thumbnail, '/'));
     }
 
     /**

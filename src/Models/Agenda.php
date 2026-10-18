@@ -94,11 +94,14 @@ class Agenda extends UmpakModel
     }
 
     /**
-     * Scope: agenda yang akan datang (start_date >= sekarang), urut terdekat.
+     * Scope: agenda yang akan datang (mulai awal hari ini), urut terdekat.
+     *
+     * Memakai awal hari (bukan jam saat ini) agar agenda yang jatuh pada
+     * hari ini tetap ikut tampil di urutan paling atas.
      */
     public function scopeUpcoming(Builder $query): Builder
     {
-        return $query->where('start_date', '>=', now())
+        return $query->whereDate('start_date', '>=', today())
             ->orderBy('start_date');
     }
 }
