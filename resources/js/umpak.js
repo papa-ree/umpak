@@ -36,10 +36,12 @@
  *     @endforeach
  *   </nav>
  */
-// Tailwind CSS 4 Dark Mode Logic
+// Tailwind CSS 4 Dark Mode Logic — satu sumber kebenaran: `hs_theme`
+// (selaras Preline dan layout panel bale/tala), nilainya light|dark|auto.
 function applyDefaultTheme() {
-    const theme = localStorage.getItem('theme');
-    const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const theme = localStorage.getItem('hs_theme') || 'auto';
+    const isDark = theme === 'dark'
+        || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     document.documentElement.classList.toggle('dark', isDark);
 }
 
@@ -60,7 +62,8 @@ document.addEventListener('alpine:init', () => {
         init() {
             // Watch for OS preference changes
             window.matchMedia("(prefers-color-scheme: dark)").addEventListener('change', (e) => {
-                if (!localStorage.getItem('theme')) {
+                const theme = localStorage.getItem('hs_theme');
+                if (!theme || theme === 'auto') {
                     this.applyTheme(e.matches);
                 }
             });
@@ -72,10 +75,10 @@ document.addEventListener('alpine:init', () => {
 
         setTheme(mode) {
             if (mode === 'system') {
-                localStorage.removeItem('theme');
+                localStorage.setItem('hs_theme', 'auto');
                 this.applyTheme(window.matchMedia("(prefers-color-scheme: dark)").matches);
             } else {
-                localStorage.setItem('theme', mode);
+                localStorage.setItem('hs_theme', mode);
                 this.applyTheme(mode === 'dark');
             }
         },
