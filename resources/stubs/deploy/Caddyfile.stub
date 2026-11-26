@@ -1,0 +1,83 @@
+{
+    frankenphp
+
+    auto_https off
+
+    servers {
+        protocols h1 h2
+        trusted_proxies static private_ranges
+        client_ip_headers CF-Connecting-IP
+    }
+
+    # php_ini session.upload_progress.enabled 0
+
+}
+
+# ── Snippet: security headers (reusable untuk semua aplikasi) ─────────────────
+# Cara pakai di blok server lain: import security_headers
+(security_headers) {
+
+    # Sembunyikan identitas server
+    header {
+        Server               ""
+        X-Powered-By         ""
+        -X-Generator
+        -X-Runtime
+        -X-Version
+    }
+
+    # Content-Security-Policy
+    #
+    # script-src:
+    #   'unsafe-inline' 'unsafe-eval' → Alpine.js & Livewire
+    #   cdn.jsdelivr.net cdnjs.cloudflare.com → library CDN umum
+    #   *.ponorogo.go.id → analytics/tracking internal (balystics, dll)
+    #   static.cloudflareinsights.com → Cloudflare Web Analytics beacon
+    #
+    # style-src:
+    #   fonts.googleapis.com → Google Fonts CSS
+    #   cdn.jsdelivr.net cdnjs.cloudflare.com → library CSS dari CDN
+    #
+    # font-src:
+    #   fonts.gstatic.com → Google Fonts file
+    #   cdn.jsdelivr.net cdnjs.cloudflare.com → Font Awesome & library font CDN
+    #
+    # img-src https: → izinkan gambar dari semua HTTPS (storage eksternal, CDN)
+    #
+    # connect-src:
+    #   *.ponorogo.go.id → API/XHR ke subdomain internal
+    #   https: → fallback untuk Axios/fetch ke endpoint eksternal
+    header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net cdnjs.cloudflare.com *.ponorogo.go.id static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com cdn.jsdelivr.net cdnjs.cloudflare.com; font-src 'self' fonts.gstatic.com cdn.jsdelivr.net cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' *.ponorogo.go.id https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+
+    header Referrer-Policy              "strict-origin-when-cross-origin"
+    header X-Frame-Options              "DENY"
+    header X-Content-Type-Options       "nosniff"
+    header X-XSS-Protection             "1; mode=block"
+    header Permissions-Policy           "geolocation=(), microphone=(), camera=(), payment=()"
+    header Cross-Origin-Opener-Policy   "same-origin"
+    header Cross-Origin-Resource-Policy "same-origin"
+    header Strict-Transport-Security    "max-age=31536000; includeSubDomains; preload"
+    header Cache-Control                "no-store, no-cache, must-revalidate, max-age=0"
+    header Pragma                       "no-cache"
+    header Expires                      "0"
+    header Clear-Site-Data              '"cache", "cookies", "storage"'
+}
+
+# ── Server block ──────────────────────────────────────────────────────────────
+http://:80 {
+    # --- Access log the Nawasara agent tails ---
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 50MiB
+			roll_keep 5
+		}
+		format json          # agent parses Caddy JSON; do not change to console
+	}
+    
+    root * /app/public
+    encode zstd br gzip
+
+    import security_headers
+
+    php_server
+}

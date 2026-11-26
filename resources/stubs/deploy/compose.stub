@@ -1,0 +1,137 @@
+services:
+    __APP_SLUG__-redis:
+        image: redis:alpine
+        container_name: __APP_SLUG__-redis
+        restart: unless-stopped
+        command: >
+            redis-server
+            --maxmemory 256mb
+            --maxmemory-policy allkeys-lru
+            --appendonly yes
+            --save 60 1000
+            --save 300 10
+        networks:
+            - rakaca-network
+        volumes:
+            - __APP_SLUG__-redis-data:/data
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        deploy:
+            resources:
+                limits:
+                    cpus: "0.5"
+                    memory: 512M
+
+    __APP_SLUG__-app:
+        # Image dibangun oleh workflow GHCR, bukan oleh compose.
+        #        build:
+        #            context: .
+        #            dockerfile: Dockerfile
+        image: ghcr.io/${GHCR_OWNER}/__APP_SLUG__:latest
+        container_name: __APP_SLUG__-app
+        restart: unless-stopped
+        depends_on:
+            __APP_SLUG__-redis:
+                condition: service_healthy
+        env_file:
+            - .env
+        environment:
+            # Override env untuk pointing ke Redis service
+            - REDIS_HOST=__APP_SLUG__-redis
+            - REDIS_PORT=6379
+            - REDIS_PASSWORD=
+            - CACHE_STORE=redis
+            - CACHE_PREFIX=__APP_SLUG__-cache
+            - SESSION_DRIVER=redis
+            - QUEUE_CONNECTION=redis
+            - GUPA_ENABLED=true
+            - GUPA_THRESHOLD=150
+            - GUPA_BLACKLIST_ENABLED=true
+            - GUPA_SCORE_DECAY_WINDOW=300
+            - GUPA_BLOCK_DURATION=3600
+            - GUPA_LOG_ENABLED=true
+            - GUPA_STORAGE=database
+            - GUPA_RECIDIVIST_DAYS=7
+            - GUPA_RECIDIVIST_THRESHOLD=3
+            - GUPA_HONEYPOT_SCORE=80
+            - GUPA_VELOCITY_MAX_REQUESTS=100
+            - GUPA_SUSPICIOUS_THRESHOLD=5
+        networks:
+            - rakaca-network
+        volumes:
+            - __APP_SLUG__-storage:/app/storage
+            - __APP_SLUG__-caddy-logs:/var/log/caddy
+            # JANGAN mount bootstrap/cache - biarkan di dalam image
+        # Filesystem read-only, tulis hanya ke volume yang diizinkan
+        # read_only: true
+        tmpfs:
+            - /tmp
+            - /var/run
+            #   - /data/caddy
+            #   - /config/caddy
+        security_opt:
+            - no-new-privileges:true
+        deploy:
+            resources:
+                limits:
+                    cpus: "1.0"
+                    memory: 1024M
+                reservations:
+                    memory: 512M
+        labels:
+            - "traefik.enable=true"
+
+            # Cloudflare Tunnel sudah handle HTTPS
+            - "traefik.http.routers.__APP_SLUG__.rule=Host(`__APP_DOMAIN__`)"
+            - "traefik.http.routers.__APP_SLUG__.entrypoints=web"
+
+            - "traefik.http.services.__APP_SLUG__.loadbalancer.server.port=80"
+
+            # Header Cloudflare ke Laravel
+            - "traefik.http.middlewares.__APP_SLUG__-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+            - "traefik.http.routers.__APP_SLUG__.middlewares=crowdsec@file,__APP_SLUG__-headers@docker"
+
+            # Watchtower auto-update
+            #- "com.centurylinklabs.watchtower.enable=false"
+
+    __APP_SLUG__-agent:
+        image: ghcr.io/nawasara/agent:latest
+        container_name: __APP_SLUG__-agent
+        restart: unless-stopped
+        depends_on:
+            - __APP_SLUG__-app
+        environment:
+            NAWASARA_URL: https://nawasara.ponorogo.go.id
+            NAWASARA_AGENT_NAME: __APP_NAME__ # unik per app, tampil di Dashboard
+            NAWASARA_WEB_SERVER: caddy
+            NAWASARA_SCANNER_ENABLED: "true"
+            TZ: Asia/Jakarta
+        volumes:
+            - __APP_SLUG__-agent-config:/etc/nawasara-agent
+            - __APP_SLUG__-agent-data:/var/lib/nawasara-agent
+            - __APP_SLUG__-storage:/app/storage:ro
+            - __APP_SLUG__-caddy-logs:/var/log/caddy:ro
+            - __APP_SLUG__-web:/app
+        security_opt:
+            - no-new-privileges:true
+        deploy:
+            resources:
+                limits:
+                    cpus: "0.25"
+                    memory: 128M
+        command: ["run", "--config", "/etc/nawasara-agent/config.yaml"]
+
+volumes:
+    __APP_SLUG__-web:
+    __APP_SLUG__-agent-config:
+    __APP_SLUG__-agent-data:
+    __APP_SLUG__-storage:
+    __APP_SLUG__-caddy-logs:
+    __APP_SLUG__-redis-data:
+
+networks:
+    rakaca-network:
+        external: true

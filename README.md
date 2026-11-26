@@ -19,6 +19,21 @@ php artisan umpak:install
 ```
 Command ini akan melakukan *publish* file konfigurasi `config/umpak.php` dan aset yang dibutuhkan.
 
+## 🐳 Scaffolding Deployment
+
+Generate file deployment untuk FrankenPHP 8.5, Caddy, dan GHCR:
+
+```bash
+php artisan umpak:make-deploy --app=sidulur-profile --domain=sidulur.ponorogo.go.id
+```
+
+File yang dihasilkan: `Dockerfile`, `Caddyfile`, `docker-entrypoint.sh`, `.dockerignore`, `docker-compose.yml`, dan `.github/workflows/deploy.yml`.
+
+- `--app` default dari `config('app.name')`.
+- `--domain` default `${APP_DOMAIN}`; isi `APP_DOMAIN` di `.env` server.
+- `--force` menimpa file yang sudah ada. Tanpa itu file existing dilewati.
+- Isi juga `GHCR_OWNER` di `.env` server agar compose menarik image dari GHCR yang benar.
+
 ## 🚀 Membangun Tema (Scaffolding)
 
 Fungsi utama Umpak adalah kemampuannya men-scaffold tema landing page baru secara instan.
@@ -84,7 +99,8 @@ Itu otomatis merender header, paragraph, list, image, dll ke dalam bentuk HTML s
 - `src/DTOs/`: Definisi bentuk data pasti yang mengalir ke frontend.
 - `src/Contracts/` & `src/Repositories/`: Tempat pengambilan data via API/Database simulasi.
 - `src/ViewComposers/`: Logic bind variabel global ke tampilan.
-- `src/Console/`: Logic terminal commands (`umpak:make`).
+- `src/Console/`: Logic terminal commands (`umpak:make`, `umpak:make-deploy`).
+- `resources/stubs/deploy/`: Template deployment untuk `umpak:make-deploy`.
 - `resources/views/components/`: Kumpulan utility komponen Umpak.
 - `src/helpers.php`: Kumpulan function pembantu.
 

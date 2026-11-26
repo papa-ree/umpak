@@ -1,0 +1,88 @@
+# Stage 1 – Composer dependencies
+FROM composer:2 AS composer
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+
+RUN composer install \
+    --no-dev \
+    --prefer-dist \
+    --no-interaction \
+    --no-scripts \
+    --optimize-autoloader
+
+COPY . .
+
+RUN composer dump-autoload --optimize \
+    && php artisan package:discover --ansi
+
+
+# Stage 2 – Vite + Tailwind
+FROM node:26-alpine AS nodebuilder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+RUN npm ci
+
+COPY resources ./resources
+COPY vite.config.* ./
+COPY public ./public
+COPY --from=composer /app/vendor ./vendor
+
+RUN npm run build
+
+
+# Stage 3 – Runtime (FrankenPHP)
+FROM dunglas/frankenphp:1-php8.5-alpine
+
+WORKDIR /app
+
+RUN install-php-extensions \
+    pdo_mysql \
+    redis \
+    opcache \
+    intl \
+    gd \
+    zip \
+    pcntl
+
+RUN { \
+    echo "expose_php = Off"; \
+    echo "display_errors = Off"; \
+    echo "log_errors = On"; \
+    echo "error_log = /dev/stderr"; \
+    echo "session.cookie_secure = On"; \
+    echo "session.cookie_httponly = On"; \
+    echo "session.cookie_samesite = Lax"; \
+    echo "session.use_strict_mode = On"; \
+    echo "zend.assertions = -1"; \
+    } > /usr/local/etc/php/conf.d/security.ini
+
+COPY --from=composer /app /app
+COPY --from=nodebuilder /app/public/build ./public/build
+
+COPY Caddyfile /etc/caddy/Caddyfile
+
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+RUN chown -R www-data:www-data /app \
+    && chmod -R 755 /app \
+    && chmod -R 775 /app/storage /app/bootstrap/cache \
+    && find /app -type f -name "*.php" -exec chmod 644 {} \;
+
+RUN mkdir -p /data/caddy /config/caddy /var/log/caddy \
+    && chown -R www-data:www-data /data /config /var/log/caddy
+
+USER www-data
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD wget -qO- http://localhost/up || exit 1
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]

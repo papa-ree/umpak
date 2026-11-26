@@ -5,6 +5,7 @@ namespace Bale\Umpak;
 use Bale\Umpak\Concerns\HasLivewireComponents;
 use Bale\Umpak\Console\Commands\InstallCommand;
 use Bale\Umpak\Console\Commands\MakeCommand;
+use Bale\Umpak\Console\Commands\MakeDeployCommand;
 use Bale\Umpak\Console\Commands\SwitchLandingPageCommand;
 use Bale\Umpak\Contracts\AgendaRepositoryInterface;
 use Bale\Umpak\Contracts\AnnouncementRepositoryInterface;
@@ -159,6 +160,7 @@ class UmpakServiceProvider extends ServiceProvider
         $this->commands([
             InstallCommand::class,
             MakeCommand::class,
+            MakeDeployCommand::class,
             SwitchLandingPageCommand::class,
         ]);
     }

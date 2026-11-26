@@ -1,0 +1,20 @@
+#!/bin/sh
+set -e
+
+echo "🚀 Starting __APP_NAME__..."
+
+echo "⏳ Waiting for Redis..."
+until php -r "new Redis(); @fsockopen('$REDIS_HOST', '$REDIS_PORT');" 2>/dev/null; do
+    sleep 1
+done
+echo "✅ Redis is ready"
+
+if [ ! -f /app/bootstrap/cache/services.php ]; then
+    echo "📦 Generating service cache..."
+    php artisan package:discover --ansi
+fi
+
+chown -R www-data:www-data /app/storage /app/bootstrap/cache 2>/dev/null || true
+
+echo "✅ Application ready"
+exec "$@"

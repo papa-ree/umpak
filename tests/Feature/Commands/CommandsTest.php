@@ -167,8 +167,8 @@ describe('umpak:make', function () {
         mkdir($packagePath, 0755, true);
 
         $this->artisan('umpak:make', [
-            'name'    => 'bale-test-dinkes',
-            'slug'    => 'test-dinkes',
+            'name' => 'bale-test-dinkes',
+            'slug' => 'test-dinkes',
             '--force' => true,
         ])->assertSuccessful();
     });
@@ -181,6 +181,89 @@ describe('umpak:make', function () {
             ->expectsOutputToContain('composer.json')
             ->expectsOutputToContain('bootstrap/providers.php')
             ->assertSuccessful();
+    });
+
+});
+
+describe('umpak:make-deploy', function () {
+
+    $targets = [
+        'Dockerfile',
+        'Caddyfile',
+        'docker-entrypoint.sh',
+        '.dockerignore',
+        'docker-compose.yml',
+        '.github/workflows/deploy.yml',
+    ];
+
+    $cleanup = function () use ($targets) {
+        foreach ($targets as $target) {
+            if (File::exists(base_path($target))) {
+                File::delete(base_path($target));
+            }
+        }
+    };
+
+    beforeEach($cleanup);
+    afterEach($cleanup);
+
+    it('generates all deployment files with app placeholders', function () use ($targets) {
+        $this->artisan('umpak:make-deploy', [
+            '--app' => 'sidulur-profile',
+            '--domain' => 'sidulur.ponorogo.go.id',
+        ])->assertSuccessful();
+
+        foreach ($targets as $target) {
+            expect(File::exists(base_path($target)))->toBeTrue();
+        }
+
+        expect(File::get(base_path('docker-entrypoint.sh')))
+            ->toContain('Starting Sidulur Profile');
+
+        expect(File::get(base_path('docker-compose.yml')))
+            ->toContain('sidulur-profile-redis')
+            ->toContain('ghcr.io/${GHCR_OWNER}/sidulur-profile:latest')
+            ->toContain('Host(`sidulur.ponorogo.go.id`)')
+            ->toContain('ghcr.io/nawasara/agent:latest');
+    });
+
+    it('uses dynamic GitHub context in the workflow', function () {
+        $this->artisan('umpak:make-deploy', [
+            '--app' => 'sidulur-profile',
+        ])->assertSuccessful();
+
+        expect(File::get(base_path('.github/workflows/deploy.yml')))
+            ->toContain('ghcr.io/${{ github.repository_owner }}/sidulur-profile:latest')
+            ->toContain('username: ${{ github.actor }}')
+            ->toContain('secrets.GITHUB_TOKEN')
+            ->not->toContain('kominfo-po');
+    });
+
+    it('falls back to APP_DOMAIN when domain is omitted', function () {
+        $this->artisan('umpak:make-deploy', [
+            '--app' => 'sidulur-profile',
+        ])->assertSuccessful();
+
+        expect(File::get(base_path('docker-compose.yml')))
+            ->toContain('Host(`${APP_DOMAIN}`)');
+    });
+
+    it('skips existing files unless forced', function () {
+        File::put(base_path('Dockerfile'), 'custom');
+
+        $this->artisan('umpak:make-deploy', [
+            '--app' => 'sidulur-profile',
+        ])->assertSuccessful();
+
+        expect(File::get(base_path('Dockerfile')))->toBe('custom');
+
+        $this->artisan('umpak:make-deploy', [
+            '--app' => 'sidulur-profile',
+            '--force' => true,
+        ])->assertSuccessful();
+
+        expect(File::get(base_path('Dockerfile')))
+            ->toContain('FROM dunglas/frankenphp:1-php8.5-alpine');
     });
 
 });
